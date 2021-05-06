@@ -18,9 +18,9 @@ inputs:
   pull-request-number:
     description: 'The Pull Request number'
     required: false
-  disable-reviews:
-    description: 'Should the action post reviews on PRs'
-    required: false
+  message:
+    description: 'Comment body to post when no labels were found'
+    required: true
 runs:
   using: 'docker'
   image: 'Dockerfile'
@@ -29,4 +29,4 @@ runs:
     - ${{ inputs.valid-labels }}
     - ${{ inputs.invalid-labels }}
     - ${{ inputs.pull-request-number }}
-    - ${{ inputs.disable-reviews }}
+    - ${{ inputs.message }}

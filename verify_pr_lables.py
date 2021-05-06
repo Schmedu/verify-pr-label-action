@@ -96,7 +96,7 @@ pr = repo.get_pull(pr_number)
 #         sys.exit(1)
 
 comments = pr.get_issue_comments()
-message = sys.argv[4]
+message = sys.argv[4].format(", ".join(valid_labels))
 message_posted = any(comment.body == message for comment in comments)
 
 # Get the pull request labels
@@ -145,8 +145,7 @@ if not pr_valid_labels:
           f'{valid_labels}', file=sys.stderr)
 
     if not message_posted:
-        # pr.create_issue_comment(message)
-        pr.create_issue_comment(message.format(", ".join(valid_labels)))
+        pr.create_issue_comment(message)
     # If reviews are disable, exit with an error code.
     print('Exiting with an error code')
     sys.exit(1)

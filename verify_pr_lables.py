@@ -3,7 +3,6 @@
 import os
 import sys
 import re
-import distutils.util
 from github import Github
 
 
@@ -39,12 +38,6 @@ def get_env_var(env_var_name, echo_value=False):
     return value
 
 
-# Check if the number of input arguments is correct
-if len(sys.argv) != 6:
-    print('ERROR: Invalid number of arguments!', file=sys.stderr)
-    sys.exit(1)
-
-# Get the GitHub token
 token = sys.argv[1]
 if not token:
     print('ERROR: A token must be provided!', file=sys.stderr)
@@ -54,12 +47,8 @@ if not token:
 valid_labels = [label.strip() for label in sys.argv[2].split(',')]
 print(f'Valid labels are: {valid_labels}')
 
-# Get the list of invalid labels
-invalid_labels = [label.strip() for label in sys.argv[3].split(',')]
-print(f'Invalid labels are: {invalid_labels}')
-
 # Get the PR number
-pr_number_str = sys.argv[4]
+pr_number_str = sys.argv[3]
 
 # Get needed values from the environmental variables
 repo_name = get_env_var('GITHUB_REPOSITORY')
@@ -107,7 +96,7 @@ pr = repo.get_pull(pr_number)
 #         sys.exit(1)
 
 comments = pr.get_issue_comments()
-message = sys.argv[5]
+message = sys.argv[4]
 message_posted = any(comment.body == message for comment in comments)
 
 # Get the pull request labels
@@ -119,16 +108,11 @@ pr_reviews = pr.get_reviews()
 # This is a list of valid labels found in the pull request
 pr_valid_labels = []
 
-# This is a list of invalid labels found in the pull request
-pr_invalid_labels = []
-
 # Check which of the label in the pull request, are in the
 # list of valid labels
 for label in pr_labels:
     if label.name in valid_labels:
         pr_valid_labels.append(label.name)
-    if label.name in invalid_labels:
-        pr_invalid_labels.append(label.name)
 
 
 # Check if there were not invalid labels and at least one valid label.
@@ -153,7 +137,7 @@ for label in pr_labels:
 # label and not invalid labels are found, we exit without an error code,
 # making the check pass. This will allow merging the pull request.
 
-# Then, we check it there are valid labels, and generate a review if needed,
+# Then, we check it there are valid labels, and generate comment if needed,
 # or exit with an error code. This is done independently of the presence of
 # invalid labels above.
 if not pr_valid_labels:
@@ -161,7 +145,8 @@ if not pr_valid_labels:
           f'{valid_labels}', file=sys.stderr)
 
     if not message_posted:
-        pr.create_issue_comment(message)
+        # pr.create_issue_comment(message)
+        pr.create_issue_comment(message.format(", ".join(valid_labels)))
     # If reviews are disable, exit with an error code.
     print('Exiting with an error code')
     sys.exit(1)
@@ -169,9 +154,3 @@ if not pr_valid_labels:
 else:
     print('This pull request contains the following valid labels: '
           f'{pr_valid_labels}')
-
-# Finally, we check if all labels are OK, and generate a review if needed,
-# or exit without an error code. This condition is complimentary to the other
-# two conditions above.
-if not pr_invalid_labels and pr_valid_labels:
-    print('All labels are OK in this pull request')
